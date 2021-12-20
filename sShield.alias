@@ -1,0 +1,36 @@
+!alias sShield
+<drac2>
+# arguments
+syntax=f'`{ctx.prefix}{ctx.alias} "[damage taken] [<cast arguments>]`'
+a=&ARGS&
+if a and a[0].lower() in ['?','help']:
+	return f'echo Use: {syntax}'
+cast_args="""&*&"""
+damage = int(a[0]) if a and a[0].isdigit() else 0
+
+# CC stuff
+cc = "Staff of Defense"
+ch = character()
+ch.create_cc_nx(cc,0,10,'long',reset_by='1d6+4')
+c = combat()
+d = int(a[0]) if a and a[0].isdigit() else 0
+
+if argparse(a).last('i'):
+	fields=f'-f  "{cc}|No charges used|inline" '
+else:
+	current = ch.get_cc(cc)
+	cost = 2
+	if (cost+1)>current:
+			return f'echo Not enough charges [{cost+1}] on your {cc} to safely cast Shield : {ch.cc_str(cc)}'
+			# todo - flag to cast unsafely, plus destruction check
+	remaining = ch.mod_cc(cc,-cost)
+	fields=f' -f "{cc} charges[-{cost}]|{cc_str(cc)}|inline" '
+
+if d: mod_hp(d,0)
+fields+=f' -f "<name> [+{d}]|{ch.hp_str()}|inline" '
+fields+= f'-f "Armor Class (+5)|{(c.me.ac if c.me.get_effect("Shield") else c.me.ac+5) if c and c.me else armor+5}|inline"'
+
+T = "<name> casts Shield with their {cc}"
+
+return f'cast "Shield" {cast_args} -title T -i -thumb {image} {fields}'
+</drac2>
